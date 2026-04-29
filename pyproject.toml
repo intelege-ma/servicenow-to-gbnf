@@ -23,4 +23,3 @@ dev-dependencies = ["pytest>=8", "ruff", "mypy"]
 
 [tool.ruff]
 line-length = 120
-EOF
