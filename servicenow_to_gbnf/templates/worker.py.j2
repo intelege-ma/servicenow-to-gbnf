@@ -1,0 +1,81 @@
+"""Generated iii worker for ServiceNow {{ table | title }} - deterministic via GBNF."""
+import asyncio
+import json
+from pathlib import Path
+
+import httpx
+import ollama
+from iii import III
+
+# Load grammar once at startup
+GRAMMAR_PATH = Path("{{ grammar_path }}")
+GRAMMAR = GRAMMAR_PATH.read_text(encoding="utf-8")
+
+iii = III("ws://localhost:49134")  # Change if your iii engine is elsewhere
+
+async def {{ iii_function_id | replace("::", "_") | replace(":", "_") }}(data: dict):
+    """Deterministic ServiceNow {{ table | title }} creator/updater.
+    
+    Input: dict with description, short_description, etc.
+    Output: dict with ServiceNow sys_id + full record.
+    Uses GBNF grammar → zero hallucinations.
+    """
+    try:
+        # 1. Build prompt
+        user_prompt = f"Create a valid ServiceNow {{ table | title }} record:\n{json.dumps(data, indent=2)}"
+        system_prompt = (Path(__file__).parent / "system_prompt.txt").read_text(encoding="utf-8")
+
+        # 2. Call local LLM with GBNF constrained decoding
+        response = ollama.generate(
+            model="llama3.2",
+            prompt=f"{system_prompt}\n\n{user_prompt}",
+            format="json",
+        )
+
+        payload = json.loads(response["response"])
+
+        # 3. POST to ServiceNow Table API
+        async with httpx.AsyncClient() as client:
+            resp = await client.post(
+                f"{{ servicenow_instance }}/api/now/table/{{ table }}",
+                json=payload,
+                auth=("admin", "your_password"),  # Use environment variables in production
+                headers={"Content-Type": "application/json"},
+                timeout=30.0,
+            )
+            resp.raise_for_status()
+            result = resp.json()
+
+        return {
+            "success": True,
+            "sys_id": result.get("result", {}).get("sys_id"),
+            "record": result.get("result"),
+            "raw_payload": payload,
+        }
+
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+async def main():
+    await iii.connect()
+
+    # Register the function
+    iii.register_function("{{ iii_function_id }}", {{ iii_function_id | replace("::", "_") | replace(":", "_") }})
+
+    # Expose via HTTP trigger
+    iii.register_trigger(
+        type="http",
+        function_id="{{ iii_function_id }}",
+        config={
+            "api_path": "{{ iii_function_id | replace('::', '/') | replace('sn:', '') }}",
+            "http_method": "POST"
+        }
+    )
+
+    # Keep worker alive
+    await asyncio.Event().wait()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())

@@ -28,30 +28,44 @@ def from_openapi(
     """Generate GBNF grammar from ServiceNow OpenAPI export."""
     console.print(Panel(f"[bold green]🚀 Processing {file} → {path} {method.upper()}[/]", title="servicenow-to-gbnf"))
 
+    # Clean path (fixes Git Bash corruption)
+    clean_path = path.strip().split("api/now")[-1]
+    if not clean_path.startswith("/"):
+        clean_path = "/" + clean_path
+    clean_path = clean_path.split("Git/")[-1]  # remove Git Bash prefix if present
+
     extractor = OpenAPIExtractor(file)
-    raw_schema = extractor.extract_request_schema(path, method)
+    
+    raw_schema = None
+    for p in extractor.spec.get("paths", {}):
+        if p.strip().rstrip('/') == clean_path.rstrip('/'):
+            raw_schema = extractor.extract_request_schema(p, method)
+            if raw_schema:
+                break
 
     if not raw_schema:
-        console.print("[bold red]❌ Could not find requestBody schema for the given path/method.[/]")
+        console.print("[bold red]❌ Could not find requestBody schema.[/]")
+        console.print("Available paths in file:")
+        for p in extractor.spec.get("paths", {}):
+            console.print(f"  - {p}")
         raise typer.Exit(1)
 
     processor = SchemaProcessor(simplify=simplify)
     processed_schema = processor.process(raw_schema)
 
-    name = f"{path.strip('/').replace('/', '-')}-{method}"
+    name = f"{clean_path.strip('/').replace('/', '-')}-{method}"
     gbnf_path = converter.convert(processed_schema, output, name)
 
     console.print(f"[bold green]✅ Success![/] Grammar saved to {gbnf_path}")
     console.print(f"[bold]JSON Schema (audit):[/] {output / f'{name}.json'}")
-    console.print("\n[italic]Next: servicenow-to-gbnf generate-worker --grammar {gbnf_path}[/]")
 
 @app.command()
 def generate_worker(
     grammar: Path = typer.Option(..., "--grammar", "-g", help="Path to .gbnf file"),
-    output: Path = typer.Option(None, "--output", "-o", help="Output path for worker.py (default: ./workers/<name>.py)"),
-    iii_function_id: str = typer.Option("sn::incident-create", "--iii-function", help="iii function ID (e.g. sn::incident-create)"),
-    servicenow_instance: str = typer.Option("https://dev12345.service-now.com", "--instance", help="Your ServiceNow instance URL"),
-    table: str = typer.Option("incident", "--table", help="ServiceNow table name"),
+    output: Path = typer.Option(None, "--output", "-o", help="Output path for worker.py"),
+    iii_function_id: str = typer.Option("sn::incident-create", "--iii-function"),
+    servicenow_instance: str = typer.Option("https://dev12345.service-now.com", "--instance"),
+    table: str = typer.Option("incident", "--table"),
 ):
     """Generate a complete, ready-to-run iii worker from a GBNF grammar."""
     if output is None:
@@ -67,11 +81,9 @@ def generate_worker(
     )
 
     console.print(f"[bold green]✅ iii Worker generated![/] {worker_path}")
-    console.print(f"[bold]Run it with:[/] python {worker_path}")
 
 @app.command()
 def version():
-    """Show version information."""
     console.print("[bold]servicenow-to-gbnf v0.1.0[/] — open-source deterministic ServiceNow connector")
 
 if __name__ == "__main__":

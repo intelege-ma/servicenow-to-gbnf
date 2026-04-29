@@ -1,0 +1,22 @@
+{
+  "type": "object",
+  "properties": {
+    "short_description": {
+      "type": "string",
+      "description": "Brief title of the incident"
+    },
+    "description": {
+      "type": "string",
+      "description": "Full description of the incident"
+    },
+    "priority": {
+      "type": "string",
+      "enum": ["1", "2", "3", "4", "5"],
+      "description": "Priority level (1 = Critical, 5 = Planning)"
+    },
+    "category": {
+      "type": "string"
+    }
+  },
+  "required": ["short_description", "description"]
+}
