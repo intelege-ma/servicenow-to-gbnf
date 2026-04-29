@@ -8,7 +8,7 @@ Works with iii + llama.cpp / Ollama.
 ## Installation
 
 ```bash
-uv pip install git+https://github.com/YOUR-USERNAME/servicenow-to-gbnf.git
+uv pip install git+https://github.com/intelege-ma/servicenow-to-gbnf.git
 
 ## Phase 2 – Generate iii Worker (NEW)
 
