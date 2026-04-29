@@ -9,15 +9,3 @@ Works with iii + llama.cpp / Ollama.
 
 ```bash
 uv pip install git+https://github.com/intelege-ma/servicenow-to-gbnf.git
-
-## Phase 2 – Generate iii Worker (NEW)
-
-```bash
-# After generating grammar
-
-servicenow-to-gbnf generate-worker \
-  --grammar ./grammars/incident-post.gbnf \
-  --iii-function sn::incident-create \
-  --instance https://dev12345.service-now.com \
-  --table incident
-  

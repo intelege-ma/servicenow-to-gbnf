@@ -17,7 +17,6 @@ app = typer.Typer(
 console = Console()
 converter = GBNFConverter()
 
-
 @app.command()
 def from_openapi(
     file: Path = typer.Option(..., "--file", "-f", help="OpenAPI YAML/JSON file exported from ServiceNow REST API Explorer"),
@@ -46,7 +45,6 @@ def from_openapi(
     console.print(f"[bold]JSON Schema (audit):[/] {output / f'{name}.json'}")
     console.print("\n[italic]Next: servicenow-to-gbnf generate-worker --grammar {gbnf_path}[/]")
 
-
 @app.command()
 def generate_worker(
     grammar: Path = typer.Option(..., "--grammar", "-g", help="Path to .gbnf file"),
@@ -70,13 +68,11 @@ def generate_worker(
 
     console.print(f"[bold green]✅ iii Worker generated![/] {worker_path}")
     console.print(f"[bold]Run it with:[/] python {worker_path}")
-    console.print(f"[bold]Test it at:[/] http://localhost:3111/{iii_function_id.replace('::', '/')}")
 
 @app.command()
 def version():
     """Show version information."""
-    console.print("[bold]servicenow-to-gbnf v0.1.0[/] — iii-hq + intelege-ma")
-
+    console.print("[bold]servicenow-to-gbnf v0.1.0[/] — open-source deterministic ServiceNow connector")
 
 if __name__ == "__main__":
     app()
