@@ -1,0 +1,41 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  test:
+    name: Test (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - run: pip install -e . && pip install pytest coverage ruff mypy
+      - run: ruff check servicenow_to_gbnf tests
+      - run: mypy servicenow_to_gbnf --ignore-missing-imports
+        continue-on-error: true
+      - run: coverage run --source=servicenow_to_gbnf.core,servicenow_to_gbnf.cli -m pytest -v && coverage report --skip-covered --omit="*/vendor/*"
+  smoke-cli:
+    name: Smoke-test CLI end-to-end
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - run: pip install -e .
+      - run: |
+          servicenow-to-gbnf from-openapi --file tests/fixtures/servicenow-incident.yaml --path /api/now/table/incident --method post --output /tmp/grammars/
+          test -s /tmp/grammars/api-now-table-incident-post.gbnf
+          servicenow-to-gbnf generate-worker --grammar /tmp/grammars/api-now-table-incident-post.gbnf --output /tmp/workers/incident.py
+          python -m py_compile /tmp/workers/incident.py
