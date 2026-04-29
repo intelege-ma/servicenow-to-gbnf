@@ -1,0 +1,128 @@
+openapi: 3.0.3
+info:
+  title: ServiceNow Table API (subset)
+  version: "1.0"
+  description: >-
+    Hand-crafted minimal subset of the ServiceNow Table API OpenAPI spec
+    used to test servicenow-to-gbnf end-to-end. Mirrors the shape produced
+    by the ServiceNow REST API Explorer export for /api/now/table/incident.
+servers:
+  - url: https://dev12345.service-now.com
+paths:
+  /api/now/table/incident:
+    post:
+      operationId: createIncident
+      summary: Create a new incident record
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IncidentRequest'
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IncidentResponse'
+    get:
+      operationId: listIncidents
+      summary: List incidents
+      responses:
+        "200":
+          description: OK
+  /api/now/table/incident/{sys_id}:
+    put:
+      operationId: updateIncident
+      summary: Update an existing incident
+      parameters:
+        - in: path
+          name: sys_id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IncidentRequest'
+      responses:
+        "200":
+          description: OK
+  /api/now/table/change_request:
+    post:
+      operationId: createChange
+      summary: Create change request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangeRequest'
+      responses:
+        "201":
+          description: Created
+components:
+  schemas:
+    IncidentRequest:
+      type: object
+      required:
+        - short_description
+        - description
+      properties:
+        short_description:
+          type: string
+          description: Brief title of the incident
+        description:
+          type: string
+          description: Full description of the incident
+        priority:
+          type: string
+          description: Priority level (1=Critical, 5=Planning)
+        state:
+          type: string
+          description: Lifecycle state code
+        impact:
+          type: string
+        urgency:
+          type: string
+        category:
+          type: string
+        assignment_group:
+          type: string
+          description: sys_id of the assignment group
+        sys_created_by:
+          type: string
+        sys_mod_count:
+          type: integer
+        opened_by:
+          type: string
+        u_custom_field_1:
+          type: string
+        work_notes:
+          type: string
+    IncidentResponse:
+      type: object
+      properties:
+        result:
+          type: object
+          properties:
+            sys_id:
+              type: string
+    ChangeRequest:
+      type: object
+      required:
+        - short_description
+      properties:
+        short_description:
+          type: string
+        description:
+          type: string
+        priority:
+          type: string
+        risk:
+          type: string
+        type:
+          type: string
