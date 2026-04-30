@@ -8,7 +8,7 @@
 **The open-source deterministic ServiceNow AI connector.**
 Turn any ServiceNow OpenAPI export into a live GBNF grammar + a ready-to-run
 [iii](https://github.com/iii-hq/iii) worker so a local LLM (llama.cpp /
-Ollama) **physically cannot** generate an invalid ServiceNow payload.
+Ollama) **physically cannot** (more or less lol) generate an invalid ServiceNow payload.
 
 > Grammar-as-contract. Documentation, validation, and audit trail in a single artifact.
 
